@@ -15,10 +15,12 @@ class SubjectsSource: NSObject, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "BasicStyle", for: indexPath)
         cell.textLabel?.text = subject[indexPath.row]
+        cell.detailTextLabel?.text = subjectDescription[indexPath.row]
         return cell
     }
     
     let subject = ["Mathematics", "Marvel Super Heroes", "Science"]
+    let subjectDescription = ["Take a Math test!", "Think you know your Marvel Super Heroes?", "Want to be a Scientist?"]
 }
 
 class ViewController: UIViewController{
