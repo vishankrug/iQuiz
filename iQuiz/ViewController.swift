@@ -33,7 +33,12 @@ class ViewController: UIViewController{
         super.viewDidLoad()
         tableView.dataSource = data
     }
-
+    @IBAction func settingsButton(_ sender: UIBarButtonItem) {
+        let alert = UIAlertController(title: "Alert!", message: "Settings go here", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: {_ in }))
+        present(alert, animated: true)
+    }
+    
 
 }
 
