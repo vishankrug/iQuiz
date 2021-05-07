@@ -23,6 +23,38 @@ class SubjectsSource: NSObject, UITableViewDataSource {
     let subjectDescription = ["Take a Math test!", "Think you know your Marvel Super Heroes?", "Want to be a Scientist?"]
 }
 
+class Topic{
+    var title : String
+    var description : String
+    //var image :
+    var questions : [Question]
+    
+    init(title t: String, description d: String, questions q: [Question]){
+        title = t
+        description = d
+        questions = q
+    }
+}
+
+class Question {
+    var question : String
+    var answer1 : String
+    var answer2 : String
+    var answer3 : String
+    var answer4 : String
+    var rightAnswer : String
+    
+    init(question q: String, answer1 a1: String, answer1 a2: String, answer1 a3: String, answer1 a4: String, rightanswer rs: String){
+        question = q
+        answer1 = a1
+        answer2 = a2
+        answer3 = a3
+        answer4 = a4
+        rightAnswer = rs
+    }
+    
+}
+
 class ViewController: UIViewController{
     
     let data = SubjectsSource()
