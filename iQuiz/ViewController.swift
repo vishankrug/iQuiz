@@ -187,13 +187,13 @@ class QuestionViewController: UIViewController, UITableViewDataSource, UITableVi
                 correctAnswer = currentQuestions[currentQuestionInt].answers[i].ans
             }
         }
-        if (isAnswerCorrect){
-            totalCorrect+=1
-        }
         
         cell = tableView.cellForRow(at: indexPath)
     }
     @IBAction func submitButton(_ sender: Any) {
+        if (isAnswerCorrect){
+            totalCorrect+=1
+        }
         performSegue(withIdentifier: "answerSelector", sender: cell)
     }
     
