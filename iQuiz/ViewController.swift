@@ -44,6 +44,7 @@ let science = Topic(title: "Science", description: "Want to be a Scientist?", qu
                                         Answer(ans: "Me", correct: false)])])
 
 let subject = [mathematics, marvel_super_hereos, science]
+var totalCorrect = 0
 
 
 
@@ -139,6 +140,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         if segue.identifier == "quizSelector" {
             let controller = segue.destination as! QuestionViewController
             controller.currentQuestions = subject[currentSubject].questions
+            controller.currentQuestionInt = 0
+            controller.subject = currentSubject
         }
     }
 
@@ -149,7 +152,11 @@ class QuestionViewController: UIViewController, UITableViewDataSource, UITableVi
     @IBOutlet weak var questionText: UILabel!
     @IBOutlet weak var questionTable: UITableView!
     var currentQuestions = [Question]()
-    var currentQuestionInt = 0;
+    var subject = Int()
+    var currentQuestionInt = Int();
+    var isAnswerCorrect = false;
+    var correctAnswer = ""
+    var cell: UITableViewCell?
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return currentQuestions[currentQuestionInt].answers.count
@@ -168,36 +175,115 @@ class QuestionViewController: UIViewController, UITableViewDataSource, UITableVi
         questionTable.dataSource = self
         questionTable.delegate = self
         questionTable.tableFooterView = UIView()
-        questionText.text = currentQuestions[0].question
+        questionText.text = currentQuestions[currentQuestionInt].question
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let cell = tableView.cellForRow(at: indexPath)
-        tableView.deselectRow(at: indexPath, animated: true)
-        currentQuestionInt+=1
-        //currentAnswer = indexPath.row
+        
+        isAnswerCorrect = currentQuestions[currentQuestionInt].answers[indexPath.row].correct
+        
+        for i in 0...currentQuestions[currentQuestionInt].answers.count-1{
+            if(currentQuestions[currentQuestionInt].answers[i].correct == true){
+                correctAnswer = currentQuestions[currentQuestionInt].answers[i].ans
+            }
+        }
+        if (isAnswerCorrect){
+            totalCorrect+=1
+        }
+        
+        cell = tableView.cellForRow(at: indexPath)
+    }
+    @IBAction func submitButton(_ sender: Any) {
         performSegue(withIdentifier: "answerSelector", sender: cell)
     }
     
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "answerSelector" {
+            let controller = segue.destination as! AnswerViewController
+            controller.subjectInt = subject
+            controller.question = currentQuestions[currentQuestionInt].question
+            controller.current = currentQuestionInt+1;
+            controller.total = currentQuestions.count
+            controller.isCorrect = isAnswerCorrect
+            controller.correctAns = correctAnswer
+        }
+    }
+    
 }
 
-class AnswerViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class AnswerViewController: UIViewController {
+    var subjectInt = Int()
+    var question = String()
+    var total = Int()
+    var current = Int()
+    var isCorrect = Bool()
+    var correctAns = String()
 
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1
-    }
-    
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "basicStyle", for: indexPath)
-
-        return cell
-    }
+    @IBOutlet weak var questionLabel: UILabel!
+    @IBOutlet weak var answerLabel: UILabel!
+    @IBOutlet weak var rightWrongLabel: UILabel!
+    @IBOutlet weak var submitButton: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        questionLabel.text = question
+        answerLabel.text = correctAns
+        if(isCorrect){
+            rightWrongLabel.text = "Correct!"
+        }else{
+            rightWrongLabel.text = "Wrong!"
+        }
+        if(current == total){
+            submitButton.setTitle("Finish", for: .normal)
+        }else{
+            submitButton.setTitle("Next Question", for: .normal)
+        }
+    }
+    @IBAction func buttonPress(_ sender: Any) {
+        if(current == total){
+            performSegue(withIdentifier: "finishSelector", sender: self)
+        }else{
+            performSegue(withIdentifier: "nextQuestion", sender: self)
+        }
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "nextQuestion" {
+            let controller = segue.destination as! QuestionViewController
+            controller.currentQuestions = subject[subjectInt].questions
+            controller.currentQuestionInt = current
+
+        } else if (segue.identifier == "finishSelector") {
+            let controller = segue.destination as! FinishViewController
+            controller.total = total
+        }
     }
     
 }
 
+class FinishViewController: UIViewController {
+    var total = Int()
+    @IBOutlet weak var descriptor: UILabel!
+    
+    @IBOutlet weak var score: UILabel!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        if(total/2 >= totalCorrect){
+            descriptor.text = "Better luck next time"
+        } else {
+            descriptor.text = "Amazing"
+        }
+        
+        score.text = String(totalCorrect) + " out of " + String(total)
+        
+        totalCorrect = 0
+    }
+    
+    @IBAction func backButton(_ sender: Any) {
+        performSegue(withIdentifier: "backToMain", sender: self)
+    }
+    
+    
+}
