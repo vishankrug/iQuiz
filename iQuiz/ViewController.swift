@@ -7,45 +7,45 @@
 
 import UIKit
 
-let mathematics = Topic(title: "Mathematics", description: "Take a Math test!", questions: [
-                            Question(question: "2+2", answers: [
-                                        Answer(ans: "1", correct: false),
-                                        Answer(ans: "2", correct: false),
-                                        Answer(ans: "3", correct: false),
-                                        Answer(ans: "4", correct: true)]),
-                            Question(question: "2+5", answers: [
-                                        Answer(ans: "1", correct: false),
-                                        Answer(ans: "2", correct: false),
-                                        Answer(ans: "7", correct: true),
-                                        Answer(ans: "4", correct: false)]),
-                            Question(question: "2+10", answers: [
-                                        Answer(ans: "1", correct: false),
-                                        Answer(ans: "12", correct: true),
-                                        Answer(ans: "3", correct: false),
-                                        Answer(ans: "4", correct: false)])])
 
-let marvel_super_hereos = Topic(title: "Marvel Super Heroes", description: "Think you know your Marvel Super Heroes?", questions: [
-                            Question(question: "Who is spider-man?", answers: [
-                                        Answer(ans: "Peter Parker", correct: true),
-                                        Answer(ans: "Bruce Wayne", correct: false),
-                                        Answer(ans: "Me", correct: false),
-                                        Answer(ans: "You", correct: false)]),
-                            Question(question: "Who is the best superhero?", answers: [
-                                        Answer(ans: "Spiderman", correct: false),
-                                        Answer(ans: "Batman", correct: false),
-                                        Answer(ans: "Ironman", correct: true),
-                                        Answer(ans: "Superman", correct: false)])])
+//let mathematics = Topic(title: "Mathematics", description: "Take a Math test!", questions: [
+//                            Question(question: "2+2", answers: [
+//                                        Answer(ans: "1", correct: false),
+//                                        Answer(ans: "2", correct: false),
+//                                        Answer(ans: "3", correct: false),
+//                                        Answer(ans: "4", correct: true)]),
+//                            Question(question: "2+5", answers: [
+//                                        Answer(ans: "1", correct: false),
+//                                        Answer(ans: "2", correct: false),
+//                                        Answer(ans: "7", correct: true),
+//                                        Answer(ans: "4", correct: false)]),
+//                            Question(question: "2+10", answers: [
+//                                        Answer(ans: "1", correct: false),
+//                                        Answer(ans: "12", correct: true),
+//                                        Answer(ans: "3", correct: false),
+//                                        Answer(ans: "4", correct: false)])])
+//
+//let marvel_super_hereos = Topic(title: "Marvel Super Heroes", description: "Think you know your Marvel Super Heroes?", questions: [
+//                            Question(question: "Who is spider-man?", answers: [
+//                                        Answer(ans: "Peter Parker", correct: true),
+//                                        Answer(ans: "Bruce Wayne", correct: false),
+//                                        Answer(ans: "Me", correct: false),
+//                                        Answer(ans: "You", correct: false)]),
+//                            Question(question: "Who is the best superhero?", answers: [
+//                                        Answer(ans: "Spiderman", correct: false),
+//                                        Answer(ans: "Batman", correct: false),
+//                                        Answer(ans: "Ironman", correct: true),
+//                                        Answer(ans: "Superman", correct: false)])])
+//
+//let science = Topic(title: "Science", description: "Want to be a Scientist?", questions: [
+//                            Question(question: "Animals that eat both plants and meat are called what?", answers: [
+//                                        Answer(ans: "Omnivores", correct: true),
+//                                        Answer(ans: "Carnivores", correct: false),
+//                                        Answer(ans: "Cannibals", correct: false),
+//                                        Answer(ans: "Me", correct: false)])])
 
-let science = Topic(title: "Science", description: "Want to be a Scientist?", questions: [
-                            Question(question: "Animals that eat both plants and meat are called what?", answers: [
-                                        Answer(ans: "Omnivores", correct: true),
-                                        Answer(ans: "Carnivores", correct: false),
-                                        Answer(ans: "Cannibals", correct: false),
-                                        Answer(ans: "Me", correct: false)])])
-
-let subject = [mathematics, marvel_super_hereos, science]
+var subject = [Topic]()
 var totalCorrect = 0
-
 
 
 class QuestionSource: NSObject, UITableViewDataSource {
@@ -69,12 +69,12 @@ class QuestionSource: NSObject, UITableViewDataSource {
 
 class Topic{
     var title : String
-    var description : String
+    var desc : String
     var questions : [Question]
     
     init(title t: String, description d: String, questions q: [Question]){
         title = t
-        description = d
+        desc = d
         questions = q
     }
 }
@@ -98,27 +98,117 @@ class Answer {
     }
 }
 
+class JSONSource {
+
+}
+
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate{
     
     @IBOutlet weak var tableView: UITableView!
+    var jsonArray: String = ""
     
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.dataSource = self
         tableView.delegate = self
         tableView.tableFooterView = UIView()
+        
+        let url = URL(string: "http://tednewardsandbox.site44.com/questions.json")
+        
+//        URLSession.shared.dataTask(with: url!, completionHandler: { data, response, error in
+//            guard let data = data, error == nil else{
+//                print("sm went wrong")
+//                return
+//            }
+//
+//            var result:
+//
+//        })
+        var questions = NSArray()
+        let task = URLSession.shared.dataTask(with: url!, completionHandler: { data, response, error in
+            do{
+                questions = try JSONSerialization.jsonObject(with: data!, options: .allowFragments) as! NSArray
+                //questions = (questions as! Array<Dictionary<Key: String, Any>>)
+            }catch {
+                print("error")
+            }
+        })
+        task.resume()
+        
+        DispatchQueue.main.async {
+            Thread.sleep(forTimeInterval: 0.5)
+            for topics in (questions as! Array<Any>){
+                var j = 0
+                var questionsArray = Question(question: "", answers: [Answer(ans: "", correct: false)])
+                let titles = (topics as! Dictionary<String, Any>)["title"]!
+                let desc = (topics as! Dictionary<String, Any>)["desc"]!
+                let ques = (topics as! Dictionary<String, Any>)["questions"]!
+                for questionDetails in (ques as! Array<Any>){
+                    var answersArray = [Answer]()
+                    let questionText = (questionDetails as! Dictionary<String, Any>)["text"]!
+                    let questionAnswer = (questionDetails as! Dictionary<String, Any>)["answer"]!
+                    let ans = (questionDetails as! Dictionary<String, Any>)["answers"]!
+                    var i = 0
+                    for question in (ans as! Array<Any>){
+                        let a = question
+                        var isAnswer = false
+                        //print(a as! String)
+                        //print(questionAnswer as! String)
+                        if(String(i+1) == (questionAnswer as! String)){
+                            isAnswer = true
+                        }
+                        //let a1 = question
+                        answersArray.insert(Answer(ans: a as! String, correct: isAnswer), at: i)
+                        i += 1
+                    }
+                    questionsArray = Question(question: questionText as! String, answers: [
+                                                Answer(ans: answersArray[0].ans, correct: answersArray[0].correct),
+                                                Answer(ans: answersArray[1].ans, correct: answersArray[1].correct),
+                                                Answer(ans: answersArray[2].ans, correct: answersArray[2].correct),
+                                                Answer(ans: answersArray[3].ans, correct: answersArray[3].correct)])
+                }
+                subject.insert(Topic(title: titles as! String, description: desc as! String, questions: [
+                                        questionsArray]), at: j)
+                j += 1
+            }
+        }
+        
+        //print(subject[0])
+        
+//        if let url = URL(string: "http://tednewardsandbox.site44.com/questions.json"){
+//            URLSession.shared.dataTask(with: url) { data, response, error in
+//                if let data = data {
+//                    if let jsonString = String(data: data, encoding: .utf8){
+//                        self.jsonArray = jsonString
+//                    }
+//                }
+//            }.resume()
+//        }
+//        print(jsonArray)
+        
+        
+        //let url = URL(string: "http://tednewardsandbox.site44.com/questions.json")
+        //let task = URLSession.shared.dataTask(with: url!) {data, response, error in print("We got data back")}
+        //task.resume()
+        //print(task)
+
     }
     
+    
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return subject.count
+        return 3
     }
     
     var currentSubject = 0
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "BasicStyle", for: indexPath)
-        cell.textLabel?.text = subject[indexPath.row].title
-        cell.detailTextLabel?.text = subject[indexPath.row].description
+        DispatchQueue.main.async {
+            Thread.sleep(forTimeInterval: 2)
+            cell.textLabel?.text = subject[indexPath.row].title
+            cell.detailTextLabel?.text = subject[indexPath.row].desc
+        }
         return cell
     }
     
