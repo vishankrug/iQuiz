@@ -124,91 +124,73 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 //            var result:
 //
 //        })
-        var questions = NSArray()
-        let task = URLSession.shared.dataTask(with: url!, completionHandler: { data, response, error in
-            do{
-                questions = try JSONSerialization.jsonObject(with: data!, options: .allowFragments) as! NSArray
-                //questions = (questions as! Array<Dictionary<Key: String, Any>>)
-            }catch {
-                print("error")
-            }
-        })
-        task.resume()
-        
-        DispatchQueue.main.async {
-            Thread.sleep(forTimeInterval: 0.5)
-            for topics in (questions as! Array<Any>){
-                var j = 0
-                var questionsArray = Question(question: "", answers: [Answer(ans: "", correct: false)])
-                let titles = (topics as! Dictionary<String, Any>)["title"]!
-                let desc = (topics as! Dictionary<String, Any>)["desc"]!
-                let ques = (topics as! Dictionary<String, Any>)["questions"]!
-                for questionDetails in (ques as! Array<Any>){
-                    var answersArray = [Answer]()
-                    let questionText = (questionDetails as! Dictionary<String, Any>)["text"]!
-                    let questionAnswer = (questionDetails as! Dictionary<String, Any>)["answer"]!
-                    let ans = (questionDetails as! Dictionary<String, Any>)["answers"]!
-                    var i = 0
-                    for question in (ans as! Array<Any>){
-                        let a = question
-                        var isAnswer = false
-                        //print(a as! String)
-                        //print(questionAnswer as! String)
-                        if(String(i+1) == (questionAnswer as! String)){
-                            isAnswer = true
+        DispatchQueue.global().async {
+            URLSession.shared.dataTask(with: url!) { data, response, error in
+                guard let data = data else {return}
+                do{
+                    let questions = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
+                    for topics in (questions as! Array<Any>){
+                        var j = 0
+                        var questionsArray = Question(question: "", answers: [Answer(ans: "", correct: false)])
+                        let titles = (topics as! Dictionary<String, Any>)["title"]!
+                        let desc = (topics as! Dictionary<String, Any>)["desc"]!
+                        let ques = (topics as! Dictionary<String, Any>)["questions"]!
+                        for questionDetails in (ques as! Array<Any>){
+                            var answersArray = [Answer]()
+                            let questionText = (questionDetails as! Dictionary<String, Any>)["text"]!
+                            let questionAnswer = (questionDetails as! Dictionary<String, Any>)["answer"]!
+                            let ans = (questionDetails as! Dictionary<String, Any>)["answers"]!
+                            var i = 0
+                            for question in (ans as! Array<Any>){
+                                let a = question
+                                var isAnswer = false
+                                //print(a as! String)
+                                //print(questionAnswer as! String)
+                                if(String(i+1) == (questionAnswer as! String)){
+                                    isAnswer = true
+                                }
+                                //let a1 = question
+                                answersArray.insert(Answer(ans: a as! String, correct: isAnswer), at: i)
+                                i += 1
+                            }
+                            questionsArray = Question(question: questionText as! String, answers: [
+                                                        Answer(ans: answersArray[0].ans, correct: answersArray[0].correct),
+                                                        Answer(ans: answersArray[1].ans, correct: answersArray[1].correct),
+                                                        Answer(ans: answersArray[2].ans, correct: answersArray[2].correct),
+                                                        Answer(ans: answersArray[3].ans, correct: answersArray[3].correct)])
                         }
-                        //let a1 = question
-                        answersArray.insert(Answer(ans: a as! String, correct: isAnswer), at: i)
-                        i += 1
+                        subject.append(Topic(title: titles as! String, description: desc as! String, questions: [
+                                                questionsArray]))
+                        j += 1
                     }
-                    questionsArray = Question(question: questionText as! String, answers: [
-                                                Answer(ans: answersArray[0].ans, correct: answersArray[0].correct),
-                                                Answer(ans: answersArray[1].ans, correct: answersArray[1].correct),
-                                                Answer(ans: answersArray[2].ans, correct: answersArray[2].correct),
-                                                Answer(ans: answersArray[3].ans, correct: answersArray[3].correct)])
+                }catch {
+                    print("error")
                 }
-                subject.insert(Topic(title: titles as! String, description: desc as! String, questions: [
-                                        questionsArray]), at: j)
-                j += 1
-            }
+            }.resume()
+            
         }
         
-        //print(subject[0])
+        Thread.sleep(forTimeInterval: 0.1)
         
-//        if let url = URL(string: "http://tednewardsandbox.site44.com/questions.json"){
-//            URLSession.shared.dataTask(with: url) { data, response, error in
-//                if let data = data {
-//                    if let jsonString = String(data: data, encoding: .utf8){
-//                        self.jsonArray = jsonString
-//                    }
-//                }
-//            }.resume()
-//        }
-//        print(jsonArray)
-        
-        
-        //let url = URL(string: "http://tednewardsandbox.site44.com/questions.json")
-        //let task = URLSession.shared.dataTask(with: url!) {data, response, error in print("We got data back")}
-        //task.resume()
-        //print(task)
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
 
     }
     
     
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 3
+        print(subject)
+        return subject.count
     }
     
     var currentSubject = 0
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "BasicStyle", for: indexPath)
-        DispatchQueue.main.async {
-            Thread.sleep(forTimeInterval: 2)
-            cell.textLabel?.text = subject[indexPath.row].title
-            cell.detailTextLabel?.text = subject[indexPath.row].desc
-        }
+        cell.textLabel?.text = subject[indexPath.row].title
+        cell.detailTextLabel?.text = subject[indexPath.row].desc
         return cell
     }
     
@@ -369,6 +351,7 @@ class FinishViewController: UIViewController {
         score.text = String(totalCorrect) + " out of " + String(total)
         
         totalCorrect = 0
+        subject = [Topic]()
     }
     
     @IBAction func backButton(_ sender: Any) {
