@@ -46,6 +46,7 @@ import UIKit
 
 var subject = [Topic]()
 var totalCorrect = 0
+var url = ""
 
 
 class QuestionSource: NSObject, UITableViewDataSource {
@@ -105,27 +106,22 @@ class JSONSource {
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate{
     
     @IBOutlet weak var tableView: UITableView!
-    var jsonArray: String = ""
+    var newurl = UITextField()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.dataSource = self
         tableView.delegate = self
         tableView.tableFooterView = UIView()
+        loadData(url: "http://tednewardsandbox.site44.com/questions.json")
+    }
+    
+    func loadData(url: String){
+        let thisURL = URL(string: url)
         
-        let url = URL(string: "http://tednewardsandbox.site44.com/questions.json")
-        
-//        URLSession.shared.dataTask(with: url!, completionHandler: { data, response, error in
-//            guard let data = data, error == nil else{
-//                print("sm went wrong")
-//                return
-//            }
-//
-//            var result:
-//
-//        })
+        subject = [Topic]()
         DispatchQueue.global().async {
-            URLSession.shared.dataTask(with: url!) { data, response, error in
+            URLSession.shared.dataTask(with: thisURL!) { data, response, error in
                 guard let data = data else {return}
                 do{
                     let questions = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
@@ -144,8 +140,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                             for question in (ans as! Array<Any>){
                                 let a = question
                                 var isAnswer = false
-                                //print(a as! String)
-                                //print(questionAnswer as! String)
                                 if(String(i+1) == (questionAnswer as! String)){
                                     isAnswer = true
                                 }
@@ -175,13 +169,11 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         DispatchQueue.main.async {
             self.tableView.reloadData()
         }
-
     }
     
     
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        print(subject)
         return subject.count
     }
     
@@ -195,12 +187,24 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
     
     @IBAction func settingsButton(_ sender: UIBarButtonItem) {
-        let alert = UIAlertController(title: "Alert!", message: "Settings go here", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: {_ in }))
-        present(alert, animated: true)
+        let alerts = UIAlertController(title: "Alert!", message: "Enter a URL", preferredStyle: .alert)
+        alerts.addTextField(configurationHandler: linkTextField)
+        
+        alerts.addAction(UIAlertAction(title: "Check now", style: .default, handler: self.checkNowHandler))
+        alerts.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        
+        present(alerts, animated: true)
     }
     
+    func linkTextField(textField: UITextField!){
+        newurl = textField
+        newurl.placeholder = "URL"
+    }
     
+    func checkNowHandler(alert: UIAlertAction!){
+        loadData(url: newurl.text!)
+    }
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let cell = tableView.cellForRow(at: indexPath)
         tableView.deselectRow(at: indexPath, animated: true)
@@ -351,7 +355,6 @@ class FinishViewController: UIViewController {
         score.text = String(totalCorrect) + " out of " + String(total)
         
         totalCorrect = 0
-        subject = [Topic]()
     }
     
     @IBAction func backButton(_ sender: Any) {
