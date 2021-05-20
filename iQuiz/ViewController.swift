@@ -118,57 +118,79 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     func loadData(url: String){
         let thisURL = URL(string: url)
+        guard URL(string: url) != nil else{
+            let alerts = UIAlertController(title: "Alert!", message: "Invalid URL!", preferredStyle: .alert)
+            alerts.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+            self.present(alerts, animated: true)
+            return
+        }
+
         
-        subject = [Topic]()
-        DispatchQueue.global().async {
-            URLSession.shared.dataTask(with: thisURL!) { data, response, error in
-                guard let data = data else {return}
-                do{
-                    let questions = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
-                    for topics in (questions as! Array<Any>){
-                        var j = 0
-                        var questionsArray = Question(question: "", answers: [Answer(ans: "", correct: false)])
-                        let titles = (topics as! Dictionary<String, Any>)["title"]!
-                        let desc = (topics as! Dictionary<String, Any>)["desc"]!
-                        let ques = (topics as! Dictionary<String, Any>)["questions"]!
-                        for questionDetails in (ques as! Array<Any>){
-                            var answersArray = [Answer]()
-                            let questionText = (questionDetails as! Dictionary<String, Any>)["text"]!
-                            let questionAnswer = (questionDetails as! Dictionary<String, Any>)["answer"]!
-                            let ans = (questionDetails as! Dictionary<String, Any>)["answers"]!
-                            var i = 0
-                            for question in (ans as! Array<Any>){
-                                let a = question
-                                var isAnswer = false
-                                if(String(i+1) == (questionAnswer as! String)){
-                                    isAnswer = true
-                                }
-                                //let a1 = question
-                                answersArray.insert(Answer(ans: a as! String, correct: isAnswer), at: i)
-                                i += 1
-                            }
-                            questionsArray = Question(question: questionText as! String, answers: [
-                                                        Answer(ans: answersArray[0].ans, correct: answersArray[0].correct),
-                                                        Answer(ans: answersArray[1].ans, correct: answersArray[1].correct),
-                                                        Answer(ans: answersArray[2].ans, correct: answersArray[2].correct),
-                                                        Answer(ans: answersArray[3].ans, correct: answersArray[3].correct)])
-                        }
-                        subject.append(Topic(title: titles as! String, description: desc as! String, questions: [
-                                                questionsArray]))
-                        j += 1
+        if(thisURL != nil){
+            subject = [Topic]()
+            DispatchQueue.global().async {
+                URLSession.shared.dataTask(with: thisURL!) { data, response, error in
+                    guard let data = data else {return}
+                    if error != nil {
+                        let alerts = UIAlertController(title: "Alert!", message: "No Network!", preferredStyle: .alert)
+                        alerts.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                        self.present(alerts, animated: true)
+                        return
                     }
-                }catch {
-                    print("error")
-                }
-            }.resume()
+                    do{
+                        let questions = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
+                        for topics in (questions as! Array<Any>){
+                            var j = 0
+                            var questionsArray = Question(question: "", answers: [Answer(ans: "", correct: false)])
+                            let titles = (topics as! Dictionary<String, Any>)["title"]!
+                            let desc = (topics as! Dictionary<String, Any>)["desc"]!
+                            let ques = (topics as! Dictionary<String, Any>)["questions"]!
+                            for questionDetails in (ques as! Array<Any>){
+                                var answersArray = [Answer]()
+                                let questionText = (questionDetails as! Dictionary<String, Any>)["text"]!
+                                let questionAnswer = (questionDetails as! Dictionary<String, Any>)["answer"]!
+                                let ans = (questionDetails as! Dictionary<String, Any>)["answers"]!
+                                var i = 0
+                                for question in (ans as! Array<Any>){
+                                    let a = question
+                                    var isAnswer = false
+                                    if(String(i+1) == (questionAnswer as! String)){
+                                        isAnswer = true
+                                    }
+                                    //let a1 = question
+                                    answersArray.insert(Answer(ans: a as! String, correct: isAnswer), at: i)
+                                    i += 1
+                                }
+                                questionsArray = Question(question: questionText as! String, answers: [
+                                                            Answer(ans: answersArray[0].ans, correct: answersArray[0].correct),
+                                                            Answer(ans: answersArray[1].ans, correct: answersArray[1].correct),
+                                                            Answer(ans: answersArray[2].ans, correct: answersArray[2].correct),
+                                                            Answer(ans: answersArray[3].ans, correct: answersArray[3].correct)])
+                            }
+                            subject.append(Topic(title: titles as! String, description: desc as! String, questions: [
+                                                    questionsArray]))
+                            j += 1
+                        }
+                    }catch {
+                        let alerts = UIAlertController(title: "Alert!", message: "Try again later!", preferredStyle: .alert)
+                        alerts.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                        self.present(alerts, animated: true)
+                    }
+                }.resume()
+                
+            }
             
+            Thread.sleep(forTimeInterval: 0.1)
+            
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        } else {
+            let alerts = UIAlertController(title: "Alert!", message: "Please enter a url", preferredStyle: .alert)
+            alerts.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+            self.present(alerts, animated: true)
         }
         
-        Thread.sleep(forTimeInterval: 0.1)
-        
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
     }
     
     
